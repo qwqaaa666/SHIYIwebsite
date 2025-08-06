@@ -3,20 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>十一的空间</title>
+    <title>十一的鸡汤空间</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
         
         body {
             margin: 0;
             min-height: 200vh;
-            background: #f5f5f5;
             font-family: 'ZCOOL KuaiLe', cursive;
             overflow-x: hidden;
-            transition: background 1s ease;
+            position: relative;
+            background: #fdfaf5 url('data:image/svg+xml,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="p" width="100" height="20" patternUnits="userSpaceOnUse"><path d="M 0 0 H 100 V 10 H 0 Z M 0 10 H 100 V 20 H 0 Z" fill="%23f7f2e8"/></pattern></defs><rect width="100%" height="100%" fill="url(%23p)"/></svg>');
+            background-size: 100px 20px;
+            background-attachment: fixed;
+        }
+
+        /* 优化后的纯色波浪动画 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #bfe6e6; /* 统一的波浪背景色 */
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1000;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
         }
         
-        /* 主容器 */
+        .wave-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            overflow: hidden;
+            transition: height 2.5s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        .wave-container.active {
+            height: 100%;
+        }
+
+        .wave-content {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: #bfe6e6;
+            animation: wave-rise 2.5s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        @keyframes wave-rise {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* 纯色气泡动画 */
+        .overlay .bubble-float {
+            position: absolute;
+            border-radius: 50%;
+            background: #e6f3f3; /* 纯色气泡，与背景色调相近 */
+            opacity: 0;
+            animation: overlay-bubble-flow 3s linear infinite;
+        }
+
+        @keyframes overlay-bubble-flow {
+            0% { transform: translateY(0) scale(0); opacity: 0; }
+            50% { opacity: 0.8; transform: translateY(-50px) scale(1); }
+            100% { transform: translateY(-100px) scale(0); opacity: 0; }
+        }
+        
         .main-container {
             min-height: 100vh;
             display: flex;
@@ -24,21 +87,26 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
-            transition: opacity 1.5s ease;
+            position: relative;
+            z-index: 5;
         }
         
-        /* 标题样式 */
         .title-container {
             text-align: center;
             margin-bottom: 30px;
+            z-index: 10;
         }
         
         .title {
-            color: #333;
+            color: #444;
             font-size: 3rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            padding: 0;
+            background: none;
+            box-shadow: none;
             animation: float 3s ease-in-out infinite alternate;
             margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
         
         .subtitle {
@@ -52,13 +120,14 @@
             100% { transform: translateY(-8px) rotate(1deg); }
         }
         
-        /* 瓦楞纸色块网格 */
         .container {
             display: grid;
             grid-template-columns: repeat(30, 24px);
             grid-template-rows: repeat(5, 24px);
             gap: 8px;
             margin: 30px 0;
+            position: relative;
+            z-index: 10;
         }
         
         .pixel {
@@ -67,8 +136,9 @@
             position: relative;
             transform-style: preserve-3d;
             transition: 
-                transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                box-shadow 0.4s ease;
+                transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                box-shadow 0.3s ease,
+                background 0.5s ease;
             cursor: pointer;
             border-radius: 2px;
             box-shadow: 
@@ -82,9 +152,9 @@
                 rgba(0,0,0,0.1) 51%,
                 rgba(0,0,0,0.2) 100%
             );
+            z-index: 1;
         }
         
-        /* 瓦楞纸纹理效果 */
         .pixel::before {
             content: '';
             position: absolute;
@@ -96,7 +166,7 @@
             transform: translateZ(-6px);
             filter: brightness(0.9);
             border-radius: 2px;
-            transition: all 0.4s ease;
+            transition: all 0.3s ease;
             background-image: repeating-linear-gradient(
                 to bottom,
                 transparent,
@@ -106,326 +176,565 @@
             );
         }
         
-        /* 悬停效果 */
-        .pixel:hover {
-            transform: translateY(-6px) rotateX(10deg);
-            box-shadow: 
-                0 10px 20px rgba(0, 0, 0, 0.3),
-                inset 0 0 0 1px rgba(255,255,255,0.3);
-        }
-        
-        .pixel:hover::before {
-            transform: translateZ(-10px);
-        }
-        
-        /* 点击悬浮效果 */
-        .pixel.active {
-            animation: floatUp 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        .pixel.wave {
+            transition: all 0.5s ease-out;
+            transform: translateY(-15px) rotateX(15deg);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
             z-index: 20;
         }
         
-        @keyframes floatUp {
-            0% { 
-                transform: translateY(-12px) rotateX(15deg);
-                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        .bubble-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0;
+            animation: bubble-flow 10s linear infinite;
+            pointer-events: auto;
+            transform: scale(0);
+            transition: transform 0.2s ease-in-out, opacity 0.5s ease;
+        }
+
+        .bubble:hover {
+            transform: scale(1.5);
+            cursor: pointer;
+        }
+
+        @keyframes bubble-flow {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
             }
-            50% {
-                transform: translateY(-20px) rotateX(10deg);
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            20% {
+                opacity: 0.8;
+                transform: translateY(80vh) scale(1);
+            }
+            80% {
+                opacity: 0.8;
+                transform: translateY(-80vh) scale(1.2);
             }
             100% {
-                transform: translateY(0);
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                transform: translateY(-100vh) scale(0);
+                opacity: 0;
             }
         }
+
+        .soup-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8) translateY(100px);
+            width: 80%;
+            max-width: 600px;
+            padding: 30px;
+            background: rgba(250, 245, 230, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255,255,255,0.5);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 100;
+            text-align: center;
+        }
         
-        /* 文档区域 */
+        .soup-container.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1) translateY(0);
+        }
+
+        .soup-title {
+            color: #555;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #dcdcdc;
+            padding-bottom: 10px;
+        }
+        
+        .soup-content {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 25px;
+        }
+        
+        .close-btn {
+            background: #f7e1b5;
+            color: #555;
+            border: 1px solid #dcdcdc;
+            padding: 8px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'ZCOOL KuaiLe', cursive;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .close-btn:hover {
+            background: #f5d794;
+            transform: translateY(-2px);
+            box-shadow: 4px 8px rgba(0,0,0,0.15);
+        }
+        
         .document {
             width: 100%;
             max-width: 800px;
             padding: 40px;
             margin: 100px auto;
             color: #333;
+            background: #faf8f0;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1), inset 0 0 0 1px #dcdcdc;
+            border: 1px solid #dcdcdc;
+            text-align: center;
             opacity: 0;
             transform: translateY(50px);
-            transition: 
-                opacity 1s ease 0.3s,
-                transform 1s ease 0.3s;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            transition: opacity 1s ease, transform 1s ease;
+            z-index: 10;
         }
         
-        body.scrolled .document {
-            opacity: 1;
-            transform: translateY(0);
+        .poem-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: #555;
+            border-bottom: 2px dashed #999;
+            padding-bottom: 10px;
         }
         
-        /* 隐藏文案 */
-        .hidden-message {
+        /* 竖向排列的段落样式 */
+        .poem-line {
+            font-size: 1.3rem;
+            line-height: 2;
+            margin: 15px 0;
+            position: relative;
+        }
+        
+        .vertical-poem-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* 隐藏藏头诗标记的样式 */
+        .highlight {
+            color: inherit;
+            font-weight: inherit;
+            display: inline-block;
+            transition: none;
+            transform: none;
+        }
+
+        .highlight:hover {
+            transform: none;
+            color: inherit;
+        }
+        
+        /* 页面右下角作者邮箱样式 */
+        #footer {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 2.5rem;
-            color: #333;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-            opacity: 0;
-            transition: opacity 1s ease;
-            z-index: 100;
-            pointer-events: none;
-            text-align: center;
-            background: rgba(255,255,255,0.9);
-            padding: 20px 40px;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.8rem;
+            color: #aaa;
+            z-index: 999;
         }
         
-        .restore-btn {
-            position: fixed;
-            bottom: 40px;
+        /* 新增：特殊色块的小红点样式 */
+        .pixel .red-dot {
+            position: absolute;
+            bottom: 2px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255,255,255,0.8);
-            color: #333;
-            border: 1px solid #ccc;
-            padding: 12px 30px;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.4s ease;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 100;
-            font-size: 1.1rem;
-            font-family: 'ZCOOL KuaiLe', cursive;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 6px;
+            height: 6px;
+            background-color: red;
+            border-radius: 50%;
+            opacity: 0; /* 默认隐藏 */
+            transition: opacity 0.3s ease;
         }
-        
-        .restore-btn:hover {
-            background: rgba(255,255,255,0.9);
-            transform: translateX(-50%) scale(1.05);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-        
-        body.faded .restore-btn {
+
+        /* 鼠标悬停时显示小红点 */
+        .pixel:hover .red-dot {
             opacity: 1;
-            pointer-events: auto;
         }
+
     </style>
 </head>
 <body>
-    <!-- 主界面 -->
-    <div class="main-container" id="mainContainer">
+    <div class="overlay" id="overlay">
+        <div class="wave-container" id="waveContainer">
+            <div class="wave-content"></div>
+        </div>
+    </div>
+    
+    <div class="main-container">
         <div class="title-container">
-            <div class="title">十一的空间</div>
-            <div class="subtitle">呃……也许……这里只有色块？</div>
+            <div class="title">十一的鸡汤空间</div>
+            <div class="subtitle">点击色块获取毒鸡汤</div>
         </div>
         
         <div class="container" id="grid"></div>
     </div>
     
-    <!-- 文档区域 -->
-    <div class="document" id="document">
-        <h2>唔……也可能是个库</h2>
-        <p>这里是瓦楞纸风格的创意空间，每一个色块都藏着无限可能。</p>
-        <p>向下滚动可能不能查看更多内容💃</p>
+    <div class="bubble-container" id="bubbleContainer"></div>
+
+    <div class="soup-container" id="soupContainer">
+        <div class="soup-title">今日毒鸡汤</div>
+        <div class="soup-content" id="soupContent"></div>
+        <button class="close-btn" id="closeBtn">干了这碗汤</button>
     </div>
     
-    <!-- 隐藏文案 -->
-    <div class="hidden-message" id="hiddenMessage">
-        <p>创意空间</p>
-        <p>带着目的来的啊（Σ(っ °Д °;)っ）</p>
-        <p>但</p>
-        <p>这世间本无公平可言</p>
-        <p>是非成败转头已成空</p>
-        <p>十年寒窗不如二代一笑</p>
-        <p>一事无成才是人生常态</p>
-        <p>的确努力不如投胎好</p>
-        <p>个人奋斗抵不过关系硬</p>
-        <p>人生苦短何必太认真</p>
-        <p>空有抱负不如躺平妙</p>
-        <p>间隙生存才是真智慧</p>
+    <div class="document">
+        <div class="poem-title">这是十一的个人空间</div>
+        
+        <div class="vertical-poem-container">
+            <div class="poem-line">
+                世间本无公平可言
+            </div>
+            <div class="poem-line">
+                是非成败转头已成空
+            </div>
+            <div class="poem-line">
+                十年寒窗不如二代一笑
+            </div>
+            <div class="poem-line">
+                一事无成才是人生常态
+            </div>
+            <div class="poem-line">
+                的确努力不如投胎好
+            </div>
+            <div class="poem-line">
+                个人奋斗抵不过关系硬
+            </div>
+            <div class="poem-line">
+                人生苦短何必太认真
+            </div>
+            <div class="poem-line">
+                空有抱负不如躺平妙
+            </div>
+            <div class="poem-line">
+                间隙生存才是真智慧
+            </div>
+        </div>
     </div>
     
-    <!-- 恢复按钮 -->
-    <button class="restore-btn" id="restoreBtn">恢复界面</button>
+    <div id="footer">
+        作者邮箱: shiyi@example.com
+    </div>
 
     <script>
-        // 初始化元素
+        const poisonSoup = [
+            "你以为有钱人很快乐吗？他们的快乐你根本想象不到。",
+            "当你觉得生活对你不公平的时候，请记住，生活连你是谁都不知道。",
+            "努力不一定会成功，但不努力一定会很舒服。",
+            "别再说什么岁月静好，那只是因为有人替你负重前行，而你只是个拖后腿的。",
+            "长得好看的人才有青春，你只有大学。",
+            "当你觉得自己又丑又穷，一无是处时，不要绝望，因为至少你的判断是对的。",
+            "所有杀不死你的，都会让你更胖。",
+            "你只看到了别人表面上的光鲜，却不知道他们在背后付出了多少努力，来掩盖自己的平庸。",
+            "梦想还是要有的，万一实现了呢？万一没实现，那不就白日做梦了吗？",
+            "有些事不是努力了就能成功，比如生孩子。",
+            "只要你足够努力，就没有你完成不了的烂事。",
+            "失败是成功之母，可成功他妈又没说什么时候生。",
+            "你以为自己是天选之子，其实你只是个路人甲。",
+            "别总抱怨自己又胖了，你瘦的时候也没见你多好看。",
+            "很多时候你不努力，并不是因为你懒，而是因为你很清楚，就算努力了也没用。",
+            "灰姑娘的故事告诉我们，鞋合不合脚只有自己知道，可穿到水晶鞋的，都是脚比较小的。",
+            "你以为你在为自己的未来奋斗，其实你只是在为老板的未来奋斗。",
+            "人生就像一场戏，演好了是喜剧，演砸了是悲剧，你只是个群演。",
+            "不要轻易相信任何人的话，包括我的。",
+            "你的善良，在别人眼里就是软弱。",
+            "世界上最遥远的距离不是生与死，而是我站在你面前，你却不知道我有多丑。",
+            "你之所以会这么累，是因为你活得太认真了。",
+            "生活就像一面镜子，你对它笑，它也对你笑，如果你长得丑，它就直接碎了。",
+            "不是每个人都能成为自己想成为的人，因为有些人连自己都不知道想成为什么样的人。",
+            "我本可以忍受黑暗，如果我不曾见过光明，但现在，我只想要钱。",
+            "人之所以痛苦，是因为记性太好。",
+            "别担心，你总会遇到对的人，但你可能等不到他。",
+            "你的善良要有锋芒，不然就会被当作理所当然。",
+            "如果你觉得人生很累，那就对了，因为你正在走上坡路，当然，也可能是你得了绝症。",
+            "不要和别人比，因为你的人生是独一无二的，你的穷也是。",
+        ];
+        
         const grid = document.getElementById('grid');
-        const mainContainer = document.getElementById('mainContainer');
-        const documentSection = document.getElementById('document');
-        const hiddenMessage = document.getElementById('hiddenMessage');
-        const restoreBtn = document.getElementById('restoreBtn');
-        const body = document.body;
+        const soupContainer = document.getElementById('soupContainer');
+        const soupContent = document.getElementById('soupContent');
+        const closeBtn = document.getElementById('closeBtn');
+        const overlay = document.getElementById('overlay');
+        const waveContainer = document.getElementById('waveContainer');
+        const bubbleContainer = document.getElementById('bubbleContainer');
         
-        // 滚动检测
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 50) {
-                body.classList.add('scrolled');
-            } else {
-                body.classList.remove('scrolled');
-            }
-        });
-        
-        // 恢复按钮点击事件
-        restoreBtn.addEventListener('click', function() {
-            restoreAllPixels();
-        });
-        
-        // 色块数组
-        const pixels = [];
-        const originalColors = [];
-        let isFaded = false;
+        const rows = 5;
+        const cols = 30;
+        let pixels = [];
+        let originalColors = [];
         let mouseX = 0;
         let mouseY = 0;
-        
-        // 跟踪鼠标位置
+        let isSpecial1Active = false;
+        let special1TriggerTime = 0;
+        let special2Enabled = false;
+
         document.addEventListener('mousemove', (e) => {
             mouseX = e.clientX;
             mouseY = e.clientY;
             updatePixelReactions();
         });
         
-        // 创建30×5网格
-        for (let y = 0; y < 5; y++) {
-            for (let x = 0; x < 30; x++) {
-                const pixel = document.createElement('div');
-                pixel.className = 'pixel';
-                
-                // 计算灰度值 - 从白到黑渐变
-                const lightness = 90 - (x + y) / (30 + 5) * 70;
-                const color = `hsl(0, 0%, ${lightness}%)`;
-                
-                pixel.style.background = color;
-                originalColors.push(color);
-                
-                // 存储像素位置
-                pixel.dataset.x = x;
-                pixel.dataset.y = y;
-                pixel.dataset.index = y * 30 + x;
-                pixel.dataset.gridX = x;
-                pixel.dataset.gridY = y;
-                
-                // 点击事件
-                pixel.addEventListener('click', function() {
-                    const index = parseInt(this.dataset.index);
-                    const x = parseInt(this.dataset.x);
-                    const y = parseInt(this.dataset.y);
+        setInterval(() => {
+            const now = Date.now();
+            special2Enabled = (now - special1TriggerTime) < 10000;
+        }, 1000);
+        
+        function setupGrid() {
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const pixel = document.createElement('div');
+                    pixel.className = 'pixel';
                     
-                    if (!isFaded) {
-                        // 检查是否是第5行第20列的像素(索引从0开始是4,19)
-                        if (x === 19 && y === 4) {
-                            startFadeEffect();
-                            showHiddenMessage();
-                        }
-                        
-                        // 点击悬浮效果
-                        this.classList.add('active');
-                        setTimeout(() => {
-                            this.classList.remove('active');
-                        }, 5000);
+                    const lightness = 90 - (x + y) / (cols + rows) * 70;
+                    const color = `hsl(0, 0%, ${lightness}%)`;
+                    
+                    pixel.style.background = color;
+                    originalColors[y * cols + x] = color;
+                    
+                    pixel.dataset.x = x;
+                    pixel.dataset.y = y;
+                    pixel.dataset.index = y * cols + x;
+                    pixel.dataset.gridX = x;
+                    pixel.dataset.gridY = y;
+                    
+                    pixel.dataset.soup = Math.floor(Math.random() * poisonSoup.length);
+                    
+                    // 新增：为特殊色块添加小红点
+                    if ((x === 19 && y === 4) || (x === 15 && y === 0)) {
+                        const redDot = document.createElement('div');
+                        redDot.className = 'red-dot';
+                        pixel.appendChild(redDot);
                     }
-                });
-                
-                grid.appendChild(pixel);
-                pixels.push(pixel);
+                    
+                    pixel.addEventListener('click', handlePixelClick);
+                    
+                    grid.appendChild(pixel);
+                    pixels[y * cols + x] = pixel;
+                }
+            }
+        }
+
+        function handlePixelClick() {
+            const x = parseInt(this.dataset.x);
+            const y = parseInt(this.dataset.y);
+            
+            if (!isSpecial1Active) {
+                if (x === 19 && y === 4) {
+                    applySpecial1Effect(4, 19);
+                } else if (x === 15 && y === 0 && special2Enabled) {
+                    applySpecial2Effect();
+                } else {
+                    this.classList.add('wave');
+                    setTimeout(() => {
+                        this.classList.remove('wave');
+                    }, 5000);
+                    
+                    const soupIndex = parseInt(this.dataset.soup);
+                    soupContent.textContent = poisonSoup[soupIndex];
+                    soupContainer.classList.add('show');
+                }
             }
         }
         
-        // 更新色块对鼠标的反应
         function updatePixelReactions() {
-            pixels.forEach((pixel) => {
-                if (pixel.classList.contains('active')) return;
+            if (isSpecial1Active) return;
+            
+            const gridRect = grid.getBoundingClientRect();
+            const gridLeft = gridRect.left;
+            const gridTop = gridRect.top;
+            
+            pixels.forEach((pixel, index) => {
+                if (pixel.classList.contains('wave')) return;
                 
-                const rect = pixel.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                
-                // 计算与鼠标的距离
-                const distance = Math.sqrt(
-                    Math.pow(mouseX - centerX, 2) + 
-                    Math.pow(mouseY - centerY, 2)
-                );
-                
-                // 只影响3x3范围内的色块
                 const gridX = parseInt(pixel.dataset.gridX);
                 const gridY = parseInt(pixel.dataset.gridY);
-                const targetX = Math.floor((mouseX - grid.offsetLeft) / (24 + 8));
-                const targetY = Math.floor((mouseY - grid.offsetTop) / (24 + 8));
+                const targetX = Math.floor((mouseX - gridLeft) / (24 + 8));
+                const targetY = Math.floor((mouseY - gridTop) / (24 + 8));
                 
-                if (Math.abs(gridX - targetX) <= 1 && Math.abs(gridY - targetY) <= 1) {
-                    // 计算影响程度 (1 - 距离/最大距离)
-                    const maxDistance = Math.sqrt(Math.pow(24 + 8, 2) * 2);
-                    const influence = 1 - Math.min(1, distance / maxDistance);
+                const gridDistance = Math.sqrt(
+                    Math.pow(gridX - targetX, 2) + 
+                    Math.pow(gridY - targetY, 2)
+                );
+                
+                if (Math.abs(gridX - targetX) <= 2 && Math.abs(gridY - targetY) <= 2) {
+                    const maxDistance = Math.sqrt(2 * Math.pow(2, 2));
+                    const normalizedDistance = Math.min(1, gridDistance / maxDistance);
                     
-                    // 线性关系影响悬浮高度
-                    const liftHeight = -8 * influence;
-                    const rotateAngle = 8 * influence;
+                    const easeOutQuad = (t) => t * (2 - t);
+                    const influence = 1 - easeOutQuad(normalizedDistance);
+                    
+                    const liftHeight = -10 * influence;
+                    const rotateAngle = 10 * influence;
+                    const shadowIntensity = 0.2 + 0.3 * influence;
+                    const zIndex = 1 + Math.floor(4 * influence);
+
+                    const baseLightness = 90 - ((gridX + gridY) / (cols + rows)) * 70;
+                    const hueOffset = ((gridX / cols) * 360 + (gridY / rows) * 180) % 360;
+                    const hue = (hueOffset + influence * 90) % 360;
+                    const saturation = 10 + 70 * influence;
+                    const lightness = baseLightness + (10 * influence);
                     
                     pixel.style.transform = `
                         translateY(${liftHeight}px) 
                         rotateX(${rotateAngle}deg)
                     `;
                     pixel.style.boxShadow = `
-                        0 ${4 + 6 * influence}px ${8 + 12 * influence}px 
-                        rgba(0, 0, 0, ${0.2 + 0.2 * influence}),
+                        0 ${4 + 8 * influence}px ${8 + 16 * influence}px 
+                        rgba(0, 0, 0, ${shadowIntensity}),
                         inset 0 0 0 1px rgba(255,255,255,${0.2 + 0.2 * influence})
                     `;
-                    pixel.style.zIndex = Math.floor(5 * influence);
+                    pixel.style.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    pixel.style.zIndex = zIndex;
+                    
+                    pixel.style.transition = `
+                        transform 0.3s cubic-bezier(0.2, 0.8, 0.4, 1),
+                        box-shadow 0.3s ease,
+                        background 0.5s ease
+                    `;
                 } else {
-                    // 超出3x3范围的色块恢复原状
-                    if (!pixel.classList.contains('active')) {
-                        pixel.style.transform = '';
-                        pixel.style.boxShadow = '';
-                        pixel.style.zIndex = '1';
-                    }
+                    const index = gridY * cols + gridX;
+                    pixel.style.transform = '';
+                    pixel.style.boxShadow = '';
+                    pixel.style.zIndex = '1';
+                    pixel.style.background = originalColors[index];
                 }
             });
         }
         
-        // 显示隐藏文案
-        function showHiddenMessage() {
-            hiddenMessage.style.opacity = '1';
-        }
-        
-        // 褪色效果
-        function startFadeEffect() {
-            isFaded = true;
-            body.classList.add('faded');
-            mainContainer.style.opacity = '0.5';
+        function applySpecial1Effect(y, x) {
+            isSpecial1Active = true;
+            special1TriggerTime = Date.now();
             
-            pixels.forEach((pixel) => {
-                const x = parseInt(pixel.dataset.x);
-                const y = parseInt(pixel.dataset.y);
-                const distance = Math.abs(x - 19) + Math.abs(y - 4);
-                
+            const maxRadius = Math.max(
+                Math.max(y, rows - 1 - y),
+                Math.max(x, cols - 1 - x)
+            );
+            
+            for (let radius = 0; radius <= maxRadius; radius++) {
                 setTimeout(() => {
-                    const lightness = 90 - distance * 5;
-                    pixel.style.background = `hsl(0, 0%, ${lightness}%)`;
-                    pixel.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
-                    pixel.style.pointerEvents = 'none';
-                }, distance * 30);
-            });
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            const distance = Math.round(Math.sqrt(Math.pow(r - y, 2) + Math.pow(c - x, 2)));
+                            if (distance === radius) {
+                                const index = r * cols + c;
+                                const hue = (distance/maxRadius) * 360;
+                                const saturation = 70 + (1-distance/maxRadius) * 30;
+                                
+                                pixels[index].style.transition = 'all 0.5s ease-out';
+                                pixels[index].style.background = `hsl(${hue}, ${saturation}%, 85%)`;
+                                pixels[index].style.transform = `translateY(-15px) rotateX(15deg)`;
+                                pixels[index].style.zIndex = 10 + Math.floor(10 * (1 - distance/maxRadius));
+                            }
+                        }
+                    }
+                }, radius * 80);
+            }
+            
+            setTimeout(() => {
+                resetSpecial1Effect();
+            }, (maxRadius * 80) + 1000);
+            
+            setTimeout(() => {
+                isSpecial1Active = false;
+            }, (maxRadius * 80) + 2000);
         }
         
-        // 恢复所有色块
-        function restoreAllPixels() {
-            pixels.forEach((pixel, index) => {
-                pixel.style.background = originalColors[index];
-                pixel.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-                pixel.style.pointerEvents = 'auto';
-                pixel.classList.remove('active');
-                pixel.style.transform = '';
-                pixel.style.zIndex = '1';
+        function resetSpecial1Effect() {
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const index = y * cols + x;
+                    pixels[index].style.transition = 'all 0.5s ease-out';
+                    pixels[index].style.background = originalColors[index];
+                    pixels[index].style.transform = '';
+                    pixels[index].style.zIndex = '1';
+                }
+            }
+        }
+        
+        function applySpecial2Effect() {
+            overlay.classList.add('active');
+            waveContainer.classList.add('active');
+            
+            const numBubbles = 20;
+            for(let i = 0; i < numBubbles; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble-float';
+                const size = Math.random() * 20 + 5;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${Math.random() * 100}%`;
+                bubble.style.bottom = `${Math.random() * 20}%`;
+                bubble.style.animationDelay = `-${Math.random() * 3}s`;
+                bubble.style.animationDuration = `${Math.random() * 4 + 2}s`;
+                overlay.appendChild(bubble);
+            }
+
+            setTimeout(() => {
+                window.location.href = 'https://example.com';
+            }, 3000);
+        }
+
+        function createBubble() {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            const size = Math.random() * 40 + 20;
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            bubble.style.left = `${Math.random() * 100}%`;
+            
+            const hue = Math.random() * 360;
+            const saturation = Math.random() * 30 + 70;
+            const lightness = Math.random() * 20 + 70;
+            bubble.style.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+            
+            bubble.style.animationDelay = `-${Math.random() * 10}s`;
+            bubble.style.animationDuration = `${Math.random() * 15 + 10}s`;
+            
+            bubble.addEventListener('click', () => {
+                bubble.style.transform = 'scale(0) rotate(180deg)';
+                bubble.style.opacity = '0';
+                setTimeout(() => {
+                    bubble.remove();
+                }, 500);
             });
             
-            isFaded = false;
-            body.classList.remove('faded');
-            mainContainer.style.opacity = '1';
-            hiddenMessage.style.opacity = '0';
+            bubbleContainer.appendChild(bubble);
+            
+            setTimeout(() => {
+                if (bubbleContainer.contains(bubble)) {
+                    bubble.remove();
+                }
+            }, parseFloat(bubble.style.animationDuration) * 1000 + 1000);
         }
+
+        setInterval(createBubble, 1000);
+        
+        closeBtn.addEventListener('click', function() {
+            soupContainer.classList.remove('show');
+        });
+
+        window.addEventListener('scroll', function() {
+            const documentSection = document.querySelector('.document');
+            if (window.scrollY > 50) {
+                documentSection.style.opacity = '1';
+                documentSection.style.transform = 'translateY(0)';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', setupGrid);
     </script>
 </body>
 </html>
